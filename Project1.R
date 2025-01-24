@@ -29,7 +29,7 @@ sheet_name <- "Countries of Interest"  # Replace with the actual sheet name you 
     mutate(
       GDP_per_capita = rgdpe / pop,
       GDP_per_capita_growth_rate = (GDP_per_capita - lag(GDP_per_capita)) / lag(GDP_per_capita) * 100,
-      pop_growth_rate = c(NA, diff(log(pop)) * 100)  # Population growth rate in %
+      pop_growth_rate = (pop - lag(pop)) / lag(pop) * 100  # Population growth rate in %
     ) %>%
     ungroup()
   
@@ -91,5 +91,4 @@ sheet_name <- "Countries of Interest"  # Replace with the actual sheet name you 
     ) +
     theme_minimal() +
     theme(legend.position = "right")  # Place the legend on the right
-  
   

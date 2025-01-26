@@ -2,12 +2,16 @@ install.packages("dplyr")   # For data manipulation
 install.packages("tidyr") #For data cleaning
 install.packages("ggplot2") # For graphs and charts
 install.packages("corrplot") # For correlation matrices
+install.packages("knitr") # For table formatting
+install.packages("kableExtra")  # For enhanced table styling
 
 # Load required libraries
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(corrplot)
+library(knitr)  
+library(kableExtra) 
 
 # Part 1 - Data Cleaning
 
@@ -35,6 +39,7 @@ df <- df %>%
 df <- df %>%
   arrange(Country, Year) %>%  # Ensure data is sorted by country and Year
   group_by(Country) %>%       # Calculate growth rate for each country
+  mutate(GDP_per_capita = rgdpe/pop) %>%
   mutate(GDP_per_capita_growth_rate = (GDP_per_capita - lag(GDP_per_capita)) / lag(GDP_per_capita) * 100) %>%
   ungroup()  # Remove the grouping
 
@@ -50,9 +55,51 @@ ggplot(df, aes(x = Year, y = GDP_per_capita_growth_rate, color = Country,group =
   ) +
   scale_x_discrete(
     breaks = seq(min(as.numeric(df$Year)), max(as.numeric(df$Year)), by = 5)  # Show every second Year (adjust as needed)
-  )
+  )+
   theme_minimal() +
   theme(legend.position = "right")  # Place the legend on the right
+  
+# Analyze average and standard deviation of growth rates
+growth_analysis <- df %>%
+  group_by(Country) %>%
+  summarize(
+    Avg_Growth = mean(GDP_per_capita_growth_rate, na.rm = TRUE),
+    Std_Dev_Growth = sd(GDP_per_capita_growth_rate, na.rm = TRUE)
+  ) %>%
+  arrange(desc(Avg_Growth))
+  
+# Print the summary table
+print(growth_analysis)
+
+# Create a table with rounded values
+growth_analysis <- data.frame(
+  Country = c("Iraq", "Yemen", "Saudi Arabia"),
+  Average_Growth = c(4.96, 4.39, 4.2),
+  Std_Dev_Growth = c(24.7, 15.9, 11.5)
+)
+
+# Display the table
+kable(growth_analysis, col.names = c("Country", "Average Growth", "Standard Deviation of Growth")) %>%
+  kable_styling(full_width = FALSE, position = "center")
+growth_analysis %>%
+  kbl(
+    col.names = c("Country", "Average Growth", "Standard Deviation of Growth"),
+    caption = "Real GDP Per Capita Growth Analysis by Country",
+    align = "c",  # Center-align all columns
+    digits = 2  # Round numeric columns to 2 decimal places
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = FALSE,
+    position = "center"
+  ) %>%
+  row_spec(0, bold = TRUE, background = "#D3D3D3") %>%  # Header row formatting
+  column_spec(2, color = "white", background = "#4CAF50") %>%  # Highlight Avg Growth column
+  column_spec(3, color = "white", background = "#2196F3") %>%  # Highlight Std Dev Growth column
+  footnote(
+    general = "Source: World Bank's World Development Indicators (1989 onward).",
+    general_title = "Note: "
+  )  
 
 # Part 3 - Growth Changes in Iraq
 # Filter data for Iraq
@@ -84,7 +131,7 @@ df <- df %>%
   ungroup()  # Remove the grouping
 
 
-  # Scatterplot of GDP per capita growth rate vs. Population growth rate
+# Scatterplot of GDP per capita growth rate vs. Population growth rate
 ggplot(df, aes(x = pop_growth_rate, y = GDP_per_capita_growth_rate, color = Country)) +
   geom_point() +  # Scatter plot
   geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed") +  # Line of best fit
@@ -149,22 +196,9 @@ ggplot(df, aes(x = hc, y = GDP_per_capita_growth_rate, color = Country)) +
   theme_minimal() +
   theme(legend.position = "right")
 
-# Scatterplot of GDP per capita growth rate vs. Human Capital
-ggplot(df, aes(x = inflation, y = GDP_per_capita_growth_rate, color = Country)) +
-  geom_point() +  # Scatter plot
-  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed") +  # Line of best fit
-  labs(
-    title = "Scatterplot of GDP per Capita Growth vs. Inflation",
-    x = "Inflation",
-    y = "GDP per Capita Growth Rate (%)",
-    color = "Country"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "right")
-  
 # Calculate the correlation matrix between GDP per capita growth rate and all variables
 correlation_matrix <- df %>%
-  select(GDP_per_capita_growth_rate, pop_growth_rate,emp,hc,pl_x,pl_m,inflation) %>%
+  select(GDP_per_capita_growth_rate, pop_growth_rate,emp,hc,pl_x,pl_m) %>%
   cor(use = "complete.obs")  # Calculate correlation, ignoring NA values
 
 # Display correlation matrix

@@ -97,7 +97,7 @@ growth_analysis %>%
   column_spec(2, color = "white", background = "#4CAF50") %>%  # Highlight Avg Growth column
   column_spec(3, color = "white", background = "#2196F3") %>%  # Highlight Std Dev Growth column
   footnote(
-    general = "Source: World Bank's World Development Indicators (1989 onward).",
+    general = "Source: Penn World Table version 10.01 (1989 onward).",
     general_title = "Note: "
   )  
 
